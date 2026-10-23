@@ -23,3 +23,33 @@ public class MessageTest {
 
         assertTrue(message.checkMessageID());
     }
+    @Test
+    public void testValidMessageLength() {
+        Message message = new Message(
+                "0000000000",
+                0,
+                "+27718693002",
+                "Hello Mike"
+        );
+
+        assertEquals("Message ready to send.", message.checkMessageLength());
+    }
+
+    @Test
+    public void testMessageThatIsTooLong() {
+        String longMessage = "a".repeat(255);
+
+        Message message = new Message(
+                "0000000000",
+                0,
+                "+27718693002",
+                longMessage
+        );
+
+        assertEquals(
+                "Message exceeds 250 characters by 5; please reduce the size.",
+                message.checkMessageLength()
+        );
+    }
+
+    
