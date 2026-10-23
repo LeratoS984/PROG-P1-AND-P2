@@ -81,4 +81,115 @@ public class Message {
                 + "; please reduce the size.";
     }
 
+    /*
+     * Message hashing
+     * Example: 00:0:HITONIGHT
+     */
+    public String createMessageHash() {
+        String[] words = messageText.trim().split("\\s+");
+
+        String firstWord = words[0].replaceAll("[^a-zA-Z0-9]", "");
+        String lastWord = words[words.length - 1]
+                .replaceAll("[^a-zA-Z0-9]", "");
+
+        return messageId.substring(0, 2)
+                + ":" + messageNumber
+                + ":" + firstWord.toUpperCase()
+                + lastWord.toUpperCase();
+    }
+
+    /*
+     
+     * 1 = Send, 2 = Disregard, 3 = Store.
+     */
+    public String SentMessage(int option) {
+        switch (option) {
+            case 1:
+                SENT_MESSAGES.add(this);
+                return "Message successfully sent.";
+
+            case 2:
+                return "Press 0 to delete the message.";
+
+            case 3:
+                STORED_MESSAGES.add(this);
+                return storeMessage();
+
+            default:
+                return "Invalid option selected.";
+        }
+    }
+
+    /*
+     * Stores messages in a JSON file.
+    
+    */
+    public String storeMessage() {
+        try {
+            Files.writeString(
+                    STORED_FILE,
+                    createJsonArray(),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING
+            );
+
+            return "Message successfully stored.";
+        } catch (IOException exception) {
+            return "Message could not be stored.";
+        }
+    }
+
+    private static String createJsonArray() {
+        StringBuilder json = new StringBuilder("[\n");
+
+        for (int index = 0; index < STORED_MESSAGES.size(); index++) {
+            Message storedMessage = STORED_MESSAGES.get(index);
+
+            json.append("  {\n");
+            json.append("    \"messageId\": \"")
+                    .append(storedMessage.messageId).append("\",\n");
+            json.append("    \"messageHash\": \"")
+                    .append(storedMessage.createMessageHash()).append("\",\n");
+            json.append("    \"recipient\": \"")
+                    .append(storedMessage.recipient).append("\",\n");
+            json.append("    \"message\": \"")
+                    .append(escapeJson(storedMessage.messageText)).append("\"\n");
+            json.append("  }");
+
+            if (index < STORED_MESSAGES.size() - 1) {
+                json.append(",");
+            }
+
+            json.append("\n");
+        }
+
+        json.append("]");
+        return json.toString();
+    }
+
+    private static String escapeJson(String text) {
+        return text.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n");
+    }
+
+    /*
+     *  returns all messages sent in this session.
+     */
+    public String printMessages() {
+        if (SENT_MESSAGES.isEmpty()) {
+            return "No messages have been sent.";
+        }
+
+        StringBuilder output = new StringBuilder();
+
+        for (Message sentMessage : SENT_MESSAGES) {
+            output.append(sentMessage.formatMessageDetails())
+                    .append(System.lineSeparator());
+        }
+
+        return output.toString();
+    }
+
     
